@@ -14,7 +14,7 @@ const config: Types.Core.GameConfig = {
     mode: Scale.FIT,
     autoCenter: Scale.CENTER_BOTH,
   },
-  scene: [MainGame],
+  // scene: [MainGame],
 };
 
 export default new Game(config);

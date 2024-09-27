@@ -1,5 +1,8 @@
-class FruitButtonGroup extends Phaser.GameObjects.Container {
-  private buttons: Phaser.GameObjects.Sprite[] = [];
+import { GameController } from "../controllers/game_controller";
+import { ButtonComponent } from "./Button";
+
+export class FruitButtonGroup extends Phaser.GameObjects.Container {
+  private buttons: ButtonComponent[] = [];
   private normalImagePaths: string[] = [
     "fruitBtnBet8",
     "fruitBtnBet7",
@@ -20,47 +23,42 @@ class FruitButtonGroup extends Phaser.GameObjects.Container {
     "fruitBtnBet22",
     "fruitBtnBet11",
   ];
-  private offSets: number[] = [-321, -238, -148, -51, 51, 148, 238, 321];
+  private soundPaths: string[] = ["c", "B", "A", "G", "F", "E", "D", "C"];
 
-  constructor(
-    scene: Phaser.Scene,
-    private bets: BetsComponent,
-    private coin: CoinComponent
-  ) {
-    super(scene, 0, 595);
+  private sounds: Phaser.Sound.BaseSound[] = [];
+  private offSets: number[] = [-320, -230, -140, -48, 48, 140, 230, 320];
+  private controller: GameController;
+
+  constructor(scene: Phaser.Scene, controller: GameController) {
+    super(scene, 375, 1260);
     this.createButtons(scene);
     scene.add.existing(this);
+    this.controller = controller;
   }
 
   private createButtons(scene: Phaser.Scene) {
     for (let i = 0; i < this.normalImagePaths.length; i++) {
-      const button = scene.add
-        .sprite(this.offSets[i], 0, this.normalImagePaths[i])
-        .setInteractive()
-        .on("pointerdown", () => {
-          button.setTexture(this.pressedImagePaths[i]);
-          this.handleBetChange(i);
-        })
-        .on("pointerup", () => {
-          button.setTexture(this.normalImagePaths[i]);
-        });
+      const button = new ButtonComponent(scene, {
+        position: { x: this.offSets[i], y: 0 },
+        defaultTexture: this.normalImagePaths[i],
+        clickedTexture: this.pressedImagePaths[i],
+        callback: () => this.handleBetChange(i),
+      });
 
       this.buttons.push(button);
       this.add(button);
+      this.sounds.push(scene.sound.add(this.soundPaths[i]));
     }
   }
 
-  private handleBetChange(index: number) {
-    // 假设 slotMachineProvider 已经在 Phaser 内部有类似逻辑
-    const bet = slotMachineProvider.increaseBet(index);
-    this.bets.updateLabel(index, bet.toString());
-    this.coin.updateLabel();
-    AudioManager.playAudio(`button${index + 1}`);
+  private handleBetChange(index: number): void {
+    this.sounds[index].play();
+    this.controller.increaseBet(index);
   }
 
-  public setEnabled(isEnabled: boolean) {
-    this.buttons.forEach((button) => {
-      button.setInteractive(isEnabled);
-    });
-  }
+  // public setEnabled(isEnabled: boolean) {
+  //   this.buttons.forEach((button) => {
+  //     button.setInteractive(isEnabled);
+  //   });
+  // }
 }
