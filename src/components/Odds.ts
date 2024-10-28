@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { LabelComponent } from "./Label";
+import { LabelComponent } from "phaser-utils/src/components/Label";
 
 export class OddsComponent extends Phaser.GameObjects.Container {
   private odds: LabelComponent[] = [];
@@ -33,7 +33,7 @@ export class OddsComponent extends Phaser.GameObjects.Container {
     super(scene, 47, 532);
 
     this.onLoad(scene);
-    scene.add.existing(this);
+    // scene.add.existing(this);
   }
 
   private onLoad(scene: Phaser.Scene) {
@@ -77,16 +77,15 @@ export class OddsComponent extends Phaser.GameObjects.Container {
 export class ActiveOddsComponent extends Phaser.GameObjects.Container {
   private odds: LabelComponent[] = [];
   private numOdds: number = 6;
-
   private oddsValues: string[] = ["40", "30", "20", "20", "15", "10"];
-
   private oddsSize: Phaser.Math.Vector2 = new Phaser.Math.Vector2(90, 50);
+  currentPos: number = 1;
 
   constructor(scene: Phaser.Scene) {
     super(scene, 47, 532);
 
     this.onLoad(scene);
-    scene.add.existing(this);
+    // scene.add.existing(this);
   }
 
   private onLoad(scene: Phaser.Scene) {
@@ -115,6 +114,46 @@ export class ActiveOddsComponent extends Phaser.GameObjects.Container {
       this.oddsSize,
       new Phaser.Math.Vector2(scene.scale.width, scene.scale.height)
     );
+  }
+
+  get_current_pos(): number {
+    return this.currentPos;
+  }
+
+  set_current_pos(index: number): void {
+    if (Number.isInteger(index) && index <= 2 && index >= 0) {
+      this.currentPos = index;
+    }
+  }
+
+  private odds_visible(index: number): void {
+    for (let i = 0; i < 3; i++) {
+      if (i === index) {
+        this.odds[i].setVisible(true);
+        this.odds[i + 3].setVisible(true);
+      } else {
+        this.odds[i].setVisible(false);
+        this.odds[i + 3].setVisible(false);
+      }
+    }
+  }
+
+  move(): void {
+    this.currentPos = (this.currentPos + 1) % 3;
+    const pos = this.convertNumber(this.currentPos);
+    this.odds_visible(pos);
+    // this.odds_visible(this.currentPos);
+  }
+
+  private convertNumber(num: number): number {
+    switch (num) {
+      case 0:
+        return 2;
+      case 2:
+        return 0;
+      default:
+        return 1;
+    }
   }
 }
 

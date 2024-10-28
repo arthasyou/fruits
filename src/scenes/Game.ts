@@ -1,18 +1,21 @@
 import { Scene } from "phaser";
 
 import { SpinComponent } from "phaser-utils/src/components/Spin";
-import { LabelComponent } from "../components/Label";
 import { GameController } from "../controllers/game_controller";
 import { ActiveOddsComponent, OddsComponent } from "../components/Odds";
 import { RowLabelComponent } from "../components/RowLabels";
 import { FruitButtonGroup } from "../components/FruitBtns";
-
-// import { Components } from "phaser-utils";
+import { LabelComponent } from "phaser-utils/src/components/Label";
+import { ActionBtns } from "../components/ActionBtns";
 
 export class Game extends Scene {
   private spin: SpinComponent;
   private coin: LabelComponent;
   private bets: RowLabelComponent;
+  private odds: OddsComponent;
+  private activeOdds: ActiveOddsComponent;
+  private actionBtns: ActionBtns;
+  private fruitBtns: FruitButtonGroup;
   private controller: GameController;
 
   constructor() {
@@ -45,6 +48,10 @@ export class Game extends Scene {
     this.load.image("fruitBtnBet66", "images/fruit_btn_bet_66.png");
     this.load.image("fruitBtnBet77", "images/fruit_btn_bet_77.png");
     this.load.image("fruitBtnBet88", "images/fruit_btn_bet_88.png");
+    this.load.image("fruitBtnBet10", "images/fruit_btn_bet_10.png");
+    this.load.image("fruitBtnBet100", "images/fruit_btn_bet_100.png");
+    this.load.image("fruitBtnBet12", "images/fruit_btn_bet_12.png");
+    this.load.image("fruitBtnBet122", "images/fruit_btn_bet_122.png");
     //audio
     this.load.audio("C", "audio/button1.mp3");
     this.load.audio("D", "audio/button2.mp3");
@@ -54,6 +61,9 @@ export class Game extends Scene {
     this.load.audio("A", "audio/button6.mp3");
     this.load.audio("B", "audio/button7.mp3");
     this.load.audio("c", "audio/button8.mp3");
+    this.load.audio("run_light", "audio/run_light.mp3");
+    this.load.audio("biu", "audio/biubiubiu.mp3");
+    this.load.audio("pa", "audio/papapa.mp3");
   }
 
   create() {
@@ -103,26 +113,44 @@ export class Game extends Scene {
       textOrigin: { x: 1, y: 0.5 },
       textPosition: { x: 40, y: 0 },
     });
+    this.odds = new OddsComponent(this);
+    this.add.existing(this.odds);
+    this.activeOdds = new ActiveOddsComponent(this);
+    this.add.existing(this.activeOdds);
 
-    this.controller = new GameController(this, this.coin, this.bets);
+    this.controller = new GameController(
+      this,
+      this.coin,
+      this.bets,
+      this.spin,
+      this.activeOdds
+    );
 
-    const splashIndices = new Set<number>([0, 2, 4, 12, 18, 22]);
-    splashIndices.add(6);
+    this.actionBtns = new ActionBtns(this, this.controller);
+
+    this.activeOdds = new ActiveOddsComponent(this);
+    this.fruitBtns = new FruitButtonGroup(this, this.controller);
+
+    // console.log("run");
+
+    const splashIndices = new Set<number>([]);
+    // splashIndices.add(6);
     // splashIndices.clear();
     this.spin.lightsVisible(splashIndices);
+    // this.spin.move();
+    // this.spin.splash(splashIndices);
+    // this.spin.startSpinWithStepsAndSpeed(
+    //   23,
+    //   [2000, 1800, 1500, 1000, 800],
+    //   [300, 600, 1000, 1200, 1500]
+    // );
 
     // this.spin.splash(splashIndices);
 
     this.controller.setCoin();
 
-    const odds = new OddsComponent(this);
-    const activedodds = new ActiveOddsComponent(this);
-    const btn = new FruitButtonGroup(this, this.controller);
-    // const btn = new ButtonComponent(this, {
-    //   position: { x: 100, y: 600 },
-    //   defaultTexture: "fruitBtnBet1",
-    //   clickedTexture: "fruitBtnBet11",
-    // });
+    this.fruitBtns = new FruitButtonGroup(this, this.controller);
+    this.add.existing(this.fruitBtns);
 
     // light.splash();
     // // light.setVisible(true);

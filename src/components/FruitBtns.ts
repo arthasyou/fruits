@@ -1,5 +1,5 @@
+import { ButtonComponent } from "phaser-utils/src/components/Button";
 import { GameController } from "../controllers/game_controller";
-import { ButtonComponent } from "./Button";
 
 export class FruitButtonGroup extends Phaser.GameObjects.Container {
   private buttons: ButtonComponent[] = [];

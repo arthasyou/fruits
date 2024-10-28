@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { LabelComponent } from "./Label";
+import { LabelComponent } from "phaser-utils/src/components/Label";
 
 interface RowLabelComponentConfig {
   texts: string[];

@@ -22,14 +22,14 @@ message m_1001_toc {
 
 // @tos_2001
 // 玩水果游戏 请求
-message FruitPlayArg{ 
+message m_2001_tos{ 
   string flag = 1; // 0=正常玩 1=续压
   repeated Bet fruits = 2; // index-> 0=苹果 7=bar 从右往左
 }
 
 // @toc_2001
 // 玩水果游戏 响应结果
-message FruitPlayResult{
+message m_2001_toc{
   repeated uint32 lights = 1; // 亮灯位置 0=右边苹果 23=右边雪豹 顺时针
   repeated Bet fruits = 2; // 投注情况 index-> 0=苹果 7=bar 从右往左
   uint32 odds = 3; //赔率(0,1,2)
@@ -67,7 +67,17 @@ message CancelResult {
 
 // 
 message Bet {
-   uint32 index = 1; // 位置
-   uint32 amount = 2; // 投注金额/中奖分
+  Symbol symbol = 1; // 位置
+  uint32 amount = 2; // 投注金额/中奖分
 }
 
+enum Symbol {
+  Bar = 0;
+  LuckySeven = 1;
+  Star = 2;
+  Watermelon = 3;
+  Bell = 4;
+  Lemon = 5;
+  Orange = 6;
+  Apple = 7;
+}
