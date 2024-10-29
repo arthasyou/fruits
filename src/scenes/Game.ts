@@ -5,12 +5,12 @@ import { GameController } from "../controllers/game_controller";
 import { ActiveOddsComponent, OddsComponent } from "../components/Odds";
 import { RowLabelComponent } from "../components/RowLabels";
 import { FruitButtonGroup } from "../components/FruitBtns";
-import { LabelComponent } from "phaser-utils/src/components/Label";
 import { ActionBtns } from "../components/ActionBtns";
+import { Score } from "../components/Score";
 
 export class Game extends Scene {
   private spin: SpinComponent;
-  private coin: LabelComponent;
+  private score: Score;
   private bets: RowLabelComponent;
   private odds: OddsComponent;
   private activeOdds: ActiveOddsComponent;
@@ -70,37 +70,33 @@ export class Game extends Scene {
     this.add.image(0, 0, "background").setOrigin(0, 0);
     this.add.image(375, 285, "spin_back").setOrigin(0.5, 0);
 
-    this.spin = new SpinComponent(this, "light", 24, 90.57, 91, 103, 331);
-    this.coin = new LabelComponent(this, {
-      position: { x: 200, y: 200 },
-      text: "9999999",
-      textStyle: {
-        fontSize: 50,
-        stroke: "black",
-        strokeThickness: 5,
-        fontStyle: "bold",
-        align: "right",
-      },
-      imageKey: "coin",
-      imageSize: { width: 250, height: 45 },
-      textOrigin: { x: 1, y: 0.5 },
-      textPosition: { x: 120, y: 0 },
-    });
-    this.add.existing(this.coin);
+    this.init_components();
 
+    this.controller = new GameController(
+      this,
+      this.score,
+      this.bets,
+      this.spin,
+      this.activeOdds,
+      this.actionBtns,
+      this.fruitBtns
+    );
+
+    this.adding_to_scene();
+
+    // Start initial animations
+    this.spin.set_currentPos(9);
+    this.spin.move();
+    this.activeOdds.move();
+  }
+
+  private init_components() {
+    this.score = new Score(this);
+    this.spin = new SpinComponent(this, "light", 24, 90.57, 91, 103, 331);
     this.bets = new RowLabelComponent(this, {
       position: { x: 45, y: 558 },
       texts: ["0", "0", "0", "0", "0", "0", "0", "0"],
-      images: [
-        "fruitImg8",
-        "fruitImg8",
-        "fruitImg8",
-        "fruitImg8",
-        "fruitImg8",
-        "fruitImg8",
-        "fruitImg8",
-        "fruitImg8",
-      ],
+      images: Array(8).fill("fruitImg8"),
       textStyle: {
         fontSize: 30,
         stroke: "black",
@@ -108,54 +104,25 @@ export class Game extends Scene {
         fontStyle: "bold",
         align: "right",
       },
-
       imageSize: { width: 90, height: 50 },
       textOrigin: { x: 1, y: 0.5 },
       textPosition: { x: 40, y: 0 },
     });
     this.odds = new OddsComponent(this);
+    this.activeOdds = new ActiveOddsComponent(this);
+    this.actionBtns = new ActionBtns(this);
+    this.fruitBtns = new FruitButtonGroup(this);
+  }
+
+  private adding_to_scene() {
+    this.add.existing(this.score);
+    this.add.existing(this.spin);
     this.add.existing(this.odds);
-    this.activeOdds = new ActiveOddsComponent(this);
+
     this.add.existing(this.activeOdds);
+    this.add.existing(this.actionBtns);
+    this.add.existing(this.bets);
 
-    this.controller = new GameController(
-      this,
-      this.coin,
-      this.bets,
-      this.spin,
-      this.activeOdds
-    );
-
-    this.actionBtns = new ActionBtns(this, this.controller);
-
-    this.activeOdds = new ActiveOddsComponent(this);
-    this.fruitBtns = new FruitButtonGroup(this, this.controller);
-
-    // console.log("run");
-
-    const splashIndices = new Set<number>([]);
-    // splashIndices.add(6);
-    // splashIndices.clear();
-    this.spin.lightsVisible(splashIndices);
-    // this.spin.move();
-    // this.spin.splash(splashIndices);
-    // this.spin.startSpinWithStepsAndSpeed(
-    //   23,
-    //   [2000, 1800, 1500, 1000, 800],
-    //   [300, 600, 1000, 1200, 1500]
-    // );
-
-    // this.spin.splash(splashIndices);
-
-    this.controller.setCoin();
-
-    this.fruitBtns = new FruitButtonGroup(this, this.controller);
     this.add.existing(this.fruitBtns);
-
-    // light.splash();
-    // // light.setVisible(true);
-    // light.setDisplaySize(100,50);
-    // light.setSize(50, 50);
-    // light.stop();
   }
 }

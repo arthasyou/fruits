@@ -47,7 +47,6 @@ export class RowLabelComponent extends Phaser.GameObjects.Container {
     }
 
     this.arrangeLabels(scene);
-    scene.add.existing(this);
   }
 
   private arrangeLabels(scene: Phaser.Scene) {

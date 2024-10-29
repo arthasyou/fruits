@@ -40,14 +40,14 @@ message m_2001_toc{
 
 // @tos_2002
 // 玩大小游戏 请求
-message BsPlayArg {
+message m_2002_tos {
   uint32 index = 1;//index-> 0=小 1=大; （只有一种下注不是大就是小
   uint32 amount = 2; //  ）
 }
 
 // @toc_2002
 // 玩大小游戏 响应结果
-message BsPlayResult {
+message m_2002_toc {
   // string id = 1;
   uint32 result = 3; // 2-6 8-12
   uint32 win = 4; // 赢分 
@@ -56,12 +56,12 @@ message BsPlayResult {
 
 // @tos_2003
 // 撤注 请求
-message CancelArg {
+message m_2003_tos {
 }
 
 // @toc_2003
 // 撤注 响应结果
-message CancelResult {
+message m_2003_toc {
   uint32 balance = 3; // 余额
 }
 

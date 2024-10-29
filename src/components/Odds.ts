@@ -79,7 +79,7 @@ export class ActiveOddsComponent extends Phaser.GameObjects.Container {
   private numOdds: number = 6;
   private oddsValues: string[] = ["40", "30", "20", "20", "15", "10"];
   private oddsSize: Phaser.Math.Vector2 = new Phaser.Math.Vector2(90, 50);
-  currentPos: number = 1;
+  currentPos: number = 2;
 
   constructor(scene: Phaser.Scene) {
     super(scene, 47, 532);

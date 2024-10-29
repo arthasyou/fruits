@@ -1,10 +1,12 @@
 import { socket } from "../socket";
 import { RowLabelComponent } from "../components/RowLabels";
 import { eventManager } from "phaser-utils/src/services/events";
-import { LabelComponent } from "phaser-utils/src/components/Label";
 import { SpinComponent } from "phaser-utils/src/components/Spin";
 import { StepTimerController } from "phaser-utils/src/services/StepTimerController";
 import { ActiveOddsComponent } from "../components/Odds";
+import { Score } from "../components/Score";
+import { ActionBtns } from "../components/ActionBtns";
+import { FruitButtonGroup } from "../components/FruitBtns";
 
 const StartTimeIntervals: number[] = [
   0.000001, 346.15384615384615, 115.38461538461539, 230.76923076923078,
@@ -20,13 +22,15 @@ const EndTimeIntervals: number[] = [
 const SpinDuration: number = 2507.692307692308;
 
 interface GameData {
-  coin: number;
+  credit: number;
+  bonus: number;
+  chip: number;
   bets: FruitBet[];
   lights: number[];
   currentLight: number;
   currentOddsIndex: number;
   furits: number[];
-  chip: number;
+  is_run: boolean;
 }
 
 enum Symbol {
@@ -46,9 +50,11 @@ interface FruitBet {
 }
 
 export class GameController {
-  private coin: LabelComponent;
+  private score: Score;
   private bets: RowLabelComponent;
   private activedOdds: ActiveOddsComponent;
+  private actionBtns: ActionBtns;
+  private fruitBtns: FruitButtonGroup;
   private data: GameData;
   private spin: SpinComponent;
   private runTimer: StepTimerController;
@@ -59,16 +65,20 @@ export class GameController {
 
   constructor(
     scene: Phaser.Scene,
-    coin: LabelComponent,
+    score: Score,
     bets: RowLabelComponent,
     spin: SpinComponent,
-    activedOdds: ActiveOddsComponent
+    activedOdds: ActiveOddsComponent,
+    actionBtns: ActionBtns,
+    fruitBtns: FruitButtonGroup
   ) {
     // console.log("ghgheheir:", scene);
     this.bets = bets;
-    this.coin = coin;
+    this.score = score;
     this.spin = spin;
     this.activedOdds = activedOdds;
+    this.actionBtns = actionBtns;
+    this.fruitBtns = fruitBtns;
     this.initialize();
     this.initData();
     this.initTimer();
@@ -85,11 +95,14 @@ export class GameController {
     eventManager.on("2001", (data: any) => {
       this.handleSlot(data);
     });
+    eventManager.on("request_fruit_run", this.request_fruit_run.bind(this));
+    eventManager.on("increaseBet", this.increaseBet.bind(this));
   }
 
   private initData() {
     this.data = {
-      coin: 0,
+      credit: 0,
+      bonus: 0,
       bets: [
         { symbol: Symbol.Bar, amount: 0 },
         { symbol: Symbol.LuckySeven, amount: 0 },
@@ -105,6 +118,7 @@ export class GameController {
       currentOddsIndex: 0,
       furits: [],
       chip: 1,
+      is_run: false,
     };
   }
 
@@ -119,8 +133,8 @@ export class GameController {
     );
   }
 
-  setCoin() {
-    this.coin.setText("1234");
+  setCredit() {
+    // this.score.setText("1234");
   }
 
   increaseBet(index: number) {
@@ -138,9 +152,13 @@ export class GameController {
   }
 
   request_fruit_run() {
-    this.spin.stopAll();
-    this.spin.clear_highlight();
-    socket.send(2001, { flag: true, fruits: this.data.bets });
+    if (this.data.is_run == false) {
+      this.data.is_run = true;
+      this.set_all_button_avalible(false);
+      this.spin.stopAll();
+      this.spin.clear_highlight();
+      socket.send(2001, { flag: true, fruits: this.data.bets });
+    }
   }
 
   private handleDataUpdate(data: any) {
@@ -153,6 +171,8 @@ export class GameController {
     console.log("Received data from dataManager:", JSON.stringify(data));
     this.data.lights = data.lights;
     this.data.currentOddsIndex = data.odds;
+    this.data.credit = data.balance;
+    this.data.bonus = data.win;
     const [steps, speed] = this.calculate_steps_and_speed(
       this.data.lights[0],
       this.data.currentOddsIndex
@@ -261,6 +281,15 @@ export class GameController {
   private spin_done(): void {
     setTimeout(() => {
       this.spin.splash_highlights();
+      this.score.set_bonus(this.data.bonus);
+      this.score.set_credit(this.data.credit);
+      this.data.is_run = false;
+      this.set_all_button_avalible(true);
     }, 500);
+  }
+
+  private set_all_button_avalible(flag: boolean) {
+    this.actionBtns.set_goBtn_avalible(flag);
+    this.fruitBtns.set_available(flag);
   }
 }

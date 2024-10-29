@@ -1,17 +1,16 @@
 import { ButtonComponent } from "phaser-utils/src/components/Button";
-import { GameController } from "../controllers/game_controller";
+import { eventManager } from "phaser-utils/src/services/events";
 
 export class ActionBtns extends Phaser.GameObjects.Container {
   private goBtn: ButtonComponent;
-  private controller: GameController;
+  // private controller: GameController;
 
-  constructor(scene: Phaser.Scene, controller: GameController) {
+  constructor(scene: Phaser.Scene) {
     super(scene, 0, 985);
 
     this.createGoBtn(scene);
-    this.createSwitchBtn(scene);
-    scene.add.existing(this);
-    this.controller = controller;
+    // this.createSwitchBtn(scene);
+    // this.controller = controller;
   }
 
   private createGoBtn(scene: Phaser.Scene) {
@@ -19,7 +18,7 @@ export class ActionBtns extends Phaser.GameObjects.Container {
       position: { x: 650, y: 0 },
       defaultTexture: "fruitBtnBet10",
       clickedTexture: "fruitBtnBet100",
-      callback: this.run.bind(this),
+      callbackUp: this.run.bind(this),
     });
     this.add(this.goBtn);
   }
@@ -29,7 +28,7 @@ export class ActionBtns extends Phaser.GameObjects.Container {
       position: { x: 550, y: 0 },
       defaultTexture: "fruitBtnBet12",
       clickedTexture: "fruitBtnBet122",
-      callback: this.handleBetChange,
+      callbackUp: this.handleBetChange,
     });
     this.add(this.goBtn);
   }
@@ -39,12 +38,10 @@ export class ActionBtns extends Phaser.GameObjects.Container {
   }
 
   private run(): void {
-    this.controller.request_fruit_run();
+    eventManager.emit("request_fruit_run");
   }
 
-  // public setEnabled(isEnabled: boolean) {
-  //   this.buttons.forEach((button) => {
-  //     button.setInteractive(isEnabled);
-  //   });
-  // }
+  set_goBtn_avalible(flag: boolean) {
+    this.goBtn.set_available(flag);
+  }
 }
