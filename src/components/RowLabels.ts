@@ -65,6 +65,12 @@ export class RowLabelComponent extends Phaser.GameObjects.Container {
     this.labelComponents[index].setText(text);
   }
 
+  resetAmounts(): void {
+    this.labelComponents.forEach((e) => {
+      e.setText("0");
+    });
+  }
+
   destroy(fromScene?: boolean): void {
     // 如果有需要手动移除的事件监听器或计时器，可以在这里处理
 

@@ -142,20 +142,7 @@ export class ActiveOddsComponent extends Phaser.GameObjects.Container {
 
   move(): void {
     this.currentPos = (this.currentPos + 2) % 3;
-    // const pos = this.convertNumber(this.currentPos);
-    // this.odds_visible(pos);
     this.odds_visible(this.currentPos);
-  }
-
-  private convertNumber(num: number): number {
-    switch (num) {
-      case 0:
-        return 2;
-      case 2:
-        return 0;
-      default:
-        return 1;
-    }
   }
 }
 

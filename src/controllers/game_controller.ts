@@ -22,6 +22,9 @@ const EndTimeIntervals: number[] = [
 
 const SpinDuration: number = 2507.692307692308;
 
+const MAX_BET_AMOUNT = 99;
+const WAIT_TIME_BEFORE_NEXT_RUN = 500;
+
 interface GameData {
   credit: number;
   bonus: number;
@@ -32,11 +35,13 @@ interface GameData {
   currentLight: number;
   currentOddsIndex: number;
   furits: number[];
-  is_run: boolean;
 }
 
 enum SlotState {
-  Bet,
+  Betting,
+  Running,
+  BigOrSmall,
+  Repeated,
 }
 
 enum Symbol {
@@ -56,6 +61,7 @@ interface FruitBet {
 }
 
 export class GameController {
+  private currentState: SlotState;
   private score: Score;
   private bets: RowLabelComponent;
   private rewards: RowLabelComponent;
@@ -95,6 +101,7 @@ export class GameController {
     this.runSound = scene.sound.add("run_light");
     this.biuSound = scene.sound.add("biu");
     this.paSound = scene.sound.add("pa");
+    this.transitionToState(SlotState.Betting);
   }
 
   private initialize() {
@@ -138,7 +145,6 @@ export class GameController {
       currentOddsIndex: 0,
       furits: [],
       chip: 1,
-      is_run: false,
     };
   }
 
@@ -153,14 +159,80 @@ export class GameController {
     );
   }
 
-  private increaseBet(index: number) {
-    if (this.data.bets[index].amount < 99) {
-      if (this.decreaseCredit()) {
-        this.data.bets[index].amount += this.data.chip;
-        this.setBet(index, this.data.bets[index].amount);
-        this.score.set_credit(this.data.credit);
-      }
+  private transitionToState(newState: SlotState) {
+    this.currentState = newState;
+    switch (this.currentState) {
+      case SlotState.Betting:
+        this.enterBettingState();
+        break;
+      case SlotState.Running:
+        this.enterRunningState();
+        break;
+      case SlotState.BigOrSmall:
+        this.enterBigOrSmallState();
+        break;
+      case SlotState.Repeated:
+        this.enterRepeatedState();
+        break;
     }
+  }
+
+  private enterBettingState() {
+    this.set_all_button_avalible(true);
+    this.actionBtns.set_big_or_small_avalibel(false);
+    this.spin.clear_highlight();
+    this.spin.stopAll();
+    this.bets.resetAmounts();
+    this.rewards.resetAmounts();
+  }
+
+  private enterRunningState() {
+    this.set_all_button_avalible(false);
+  }
+
+  private enterBigOrSmallState() {
+    this.actionBtns.set_big_or_small_avalibel(true);
+    this.actionBtns.set_goBtn_avalible(true);
+  }
+
+  private enterRepeatedState() {
+    this.set_all_button_avalible(true);
+    this.spin.clear_highlight();
+    this.spin.stopAll();
+    this.actionBtns.set_big_or_small_avalibel(false);
+    this.rewards.resetAmounts();
+  }
+
+  private increaseBet(index: number) {
+    if (this.currentState === SlotState.Betting) {
+      this.handleBettingStateIncrease(index);
+    } else if (this.currentState === SlotState.Repeated) {
+      this.handleRepeatedStateIncrease(index);
+    }
+  }
+
+  private handleBettingStateIncrease(index: number) {
+    if (
+      this.data.bets[index].amount < MAX_BET_AMOUNT &&
+      this.decreaseCredit()
+    ) {
+      this.updateBetAmount(index, this.data.chip);
+    }
+  }
+
+  private handleRepeatedStateIncrease(index: number) {
+    this.resetAmounts();
+    this.transitionToState(SlotState.Betting);
+
+    if (this.decreaseCredit()) {
+      this.updateBetAmount(index, this.data.chip);
+    }
+  }
+
+  private updateBetAmount(index: number, amount: number) {
+    this.data.bets[index].amount += amount;
+    this.setBet(index, this.data.bets[index].amount);
+    this.score.set_credit(this.data.credit);
   }
 
   private decreaseCredit(): boolean {
@@ -191,24 +263,62 @@ export class GameController {
 
   init() {
     socket.send(1001, {});
-    // console.log("init");
-    // if (!socket.send(1001, {})) {
-    //   setTimeout(() => {
-    //     this.init();
-    //   }, 500);
-    // }
   }
 
   request_fruit_run() {
-    if (this.data.is_run == false) {
-      if (this.get_bets_value() > 0) {
-        this.data.is_run = true;
-        this.set_all_button_avalible(false);
-        this.spin.stopAll();
-        this.spin.clear_highlight();
-        socket.send(2001, { flag: 0, fruits: this.data.bets });
-      }
+    switch (this.currentState) {
+      case SlotState.Betting:
+        this.handleBettingState();
+        break;
+
+      case SlotState.Repeated:
+        this.handleRepeatedState();
+        break;
+
+      case SlotState.BigOrSmall:
+        this.handleBigOrSmallState();
+        break;
     }
+  }
+
+  private handleBettingState() {
+    if (this.get_bets_value() > 0) {
+      this.toggleGoButton(false);
+      this.sendSocketData(2001, 0);
+    }
+  }
+
+  private handleRepeatedState() {
+    const betValue = this.get_bets_value();
+    if (this.data.credit >= betValue) {
+      this.toggleGoButton(false);
+      this.updateCredit(-betValue);
+      this.sendSocketData(2001, 1);
+    }
+  }
+
+  private handleBigOrSmallState() {
+    this.updateCredit(this.data.bonus);
+    this.updateBonus(0);
+    this.transitionToState(SlotState.Repeated);
+  }
+
+  private toggleGoButton(isAvailable: boolean) {
+    this.actionBtns.set_goBtn_avalible(isAvailable);
+  }
+
+  private updateCredit(amount: number) {
+    this.data.credit += amount;
+    this.score.set_credit(this.data.credit);
+  }
+
+  private updateBonus(amount: number) {
+    this.data.bonus = amount;
+    this.score.set_bonus(this.data.bonus);
+  }
+
+  private sendSocketData(eventId: number, flag: number) {
+    socket.send(eventId, { flag, fruits: this.data.bets });
   }
 
   private handleDataUpdate(data: any) {
@@ -219,6 +329,7 @@ export class GameController {
   }
 
   private handleSlot(data: any) {
+    this.transitionToState(SlotState.Running);
     // 处理 dataManager 发来的数据
     // console.log("Received data from dataManager:", JSON.stringify(data));
     this.data.lights = data.lights;
@@ -249,7 +360,7 @@ export class GameController {
     if (this.data.lights.length > 0) {
       setTimeout(() => {
         this.mulRun();
-      }, 500);
+      }, WAIT_TIME_BEFORE_NEXT_RUN);
     } else {
       this.spin_done();
     }
@@ -285,7 +396,7 @@ export class GameController {
     this.data.lights.splice(0, 1);
 
     this.biuSound.play();
-    this.mulRunTimer.start(steps, [500], [], 10);
+    this.mulRunTimer.start(steps, [WAIT_TIME_BEFORE_NEXT_RUN], [], 10);
   }
 
   private updateMulRun(): void {
@@ -298,7 +409,7 @@ export class GameController {
     if (this.data.lights.length > 0) {
       setTimeout(() => {
         this.mulRun();
-      }, 500);
+      }, WAIT_TIME_BEFORE_NEXT_RUN);
     } else {
       this.spin_done();
     }
@@ -322,9 +433,12 @@ export class GameController {
       this.score.set_bonus(this.data.bonus);
       this.score.set_credit(this.data.credit);
       this.set_rewards();
-      this.data.is_run = false;
-      this.set_all_button_avalible(true);
-    }, 500);
+      if (this.data.bonus === 0) {
+        this.transitionToState(SlotState.Repeated);
+      } else {
+        this.transitionToState(SlotState.BigOrSmall);
+      }
+    }, WAIT_TIME_BEFORE_NEXT_RUN);
   }
 
   private set_all_button_avalible(flag: boolean) {
@@ -344,5 +458,12 @@ export class GameController {
       sum += e.amount;
     });
     return sum;
+  }
+
+  private resetAmounts(): void {
+    this.data.bets.forEach((bet) => {
+      bet.amount = 0;
+    });
+    this.bets.resetAmounts();
   }
 }
