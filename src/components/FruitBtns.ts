@@ -27,6 +27,16 @@ export class FruitButtonGroup extends Phaser.GameObjects.Container {
 
   private sounds: Phaser.Sound.BaseSound[] = [];
   private offSets: number[] = [-320, -230, -140, -48, 48, 140, 230, 320];
+  private isKeyPressed: boolean[] = [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ];
   constructor(scene: Phaser.Scene) {
     super(scene, 375, 1260);
     this.createButtons(scene);
@@ -38,7 +48,9 @@ export class FruitButtonGroup extends Phaser.GameObjects.Container {
         position: { x: this.offSets[i], y: 0 },
         defaultTexture: this.normalImagePaths[i],
         clickedTexture: this.pressedImagePaths[i],
+        callbackDown: () => this.press_down(i),
         callbackUp: () => this.handleBetChange(i),
+        callbackOut: () => this.cancel_bet(i),
       });
 
       this.buttons.push(button);
@@ -48,11 +60,39 @@ export class FruitButtonGroup extends Phaser.GameObjects.Container {
   }
 
   private handleBetChange(index: number): void {
+    // console.log("up");
+    this.isKeyPressed[index] = false;
     this.sounds[index].play();
     eventManager.emit("increaseBet", index);
   }
 
-  public set_available(flag: boolean) {
+  private press_down(index: number): void {
+    this.isKeyPressed[index] = true;
+    setTimeout(() => {
+      this.long_press(index);
+    }, 500);
+  }
+
+  private long_press(index: number): void {
+    if (this.isKeyPressed[index]) {
+      setTimeout(() => {
+        eventManager.emit("increaseBet", index);
+        this.long_press(index);
+      }, 30);
+    }
+  }
+
+  private cancel_bet(index: number): void {
+    // console.log("cancel");
+    if (this.isKeyPressed[index]) {
+      this.isKeyPressed[index] = false;
+      setTimeout(() => {
+        eventManager.emit("cancel_bet", index);
+      }, 40);
+    }
+  }
+
+  set_available(flag: boolean) {
     this.buttons.forEach((button) => {
       button.set_available(flag);
     });

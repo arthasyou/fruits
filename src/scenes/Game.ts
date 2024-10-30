@@ -12,6 +12,7 @@ export class Game extends Scene {
   private spin: SpinComponent;
   private score: Score;
   private bets: RowLabelComponent;
+  private reward: RowLabelComponent;
   private odds: OddsComponent;
   private activeOdds: ActiveOddsComponent;
   private actionBtns: ActionBtns;
@@ -76,6 +77,7 @@ export class Game extends Scene {
       this,
       this.score,
       this.bets,
+      this.reward,
       this.spin,
       this.activeOdds,
       this.actionBtns,
@@ -88,6 +90,7 @@ export class Game extends Scene {
     this.spin.set_currentPos(9);
     this.spin.move();
     this.activeOdds.move();
+    this.controller.init();
   }
 
   private init_components() {
@@ -95,6 +98,21 @@ export class Game extends Scene {
     this.spin = new SpinComponent(this, "light", 24, 90.57, 91, 103, 331);
     this.bets = new RowLabelComponent(this, {
       position: { x: 45, y: 558 },
+      texts: ["0", "0", "0", "0", "0", "0", "0", "0"],
+      images: Array(8).fill("fruitImg8"),
+      textStyle: {
+        fontSize: 40,
+        stroke: "black",
+        strokeThickness: 5,
+        fontStyle: "bold",
+        align: "right",
+      },
+      imageSize: { width: 90, height: 50 },
+      textOrigin: { x: 1, y: 0.5 },
+      textPosition: { x: 30, y: 0 },
+    });
+    this.reward = new RowLabelComponent(this, {
+      position: { x: 45, y: 584 },
       texts: ["0", "0", "0", "0", "0", "0", "0", "0"],
       images: Array(8).fill("fruitImg8"),
       textStyle: {
@@ -122,6 +140,7 @@ export class Game extends Scene {
     this.add.existing(this.activeOdds);
     this.add.existing(this.actionBtns);
     this.add.existing(this.bets);
+    this.add.existing(this.reward);
 
     this.add.existing(this.fruitBtns);
   }

@@ -1,6 +1,7 @@
+import { eventManager } from "phaser-utils/src/services/events";
 import { socket } from "../socket";
 import { RowLabelComponent } from "../components/RowLabels";
-import { eventManager } from "phaser-utils/src/services/events";
+
 import { SpinComponent } from "phaser-utils/src/components/Spin";
 import { StepTimerController } from "phaser-utils/src/services/StepTimerController";
 import { ActiveOddsComponent } from "../components/Odds";
@@ -26,11 +27,16 @@ interface GameData {
   bonus: number;
   chip: number;
   bets: FruitBet[];
+  rewards: FruitBet[];
   lights: number[];
   currentLight: number;
   currentOddsIndex: number;
   furits: number[];
   is_run: boolean;
+}
+
+enum SlotState {
+  Bet,
 }
 
 enum Symbol {
@@ -52,6 +58,7 @@ interface FruitBet {
 export class GameController {
   private score: Score;
   private bets: RowLabelComponent;
+  private rewards: RowLabelComponent;
   private activedOdds: ActiveOddsComponent;
   private actionBtns: ActionBtns;
   private fruitBtns: FruitButtonGroup;
@@ -67,19 +74,22 @@ export class GameController {
     scene: Phaser.Scene,
     score: Score,
     bets: RowLabelComponent,
+    rewards: RowLabelComponent,
     spin: SpinComponent,
     activedOdds: ActiveOddsComponent,
     actionBtns: ActionBtns,
     fruitBtns: FruitButtonGroup
   ) {
     // console.log("ghgheheir:", scene);
+    this.initialize();
     this.bets = bets;
+    this.rewards = rewards;
     this.score = score;
     this.spin = spin;
     this.activedOdds = activedOdds;
     this.actionBtns = actionBtns;
     this.fruitBtns = fruitBtns;
-    this.initialize();
+
     this.initData();
     this.initTimer();
     this.runSound = scene.sound.add("run_light");
@@ -88,7 +98,6 @@ export class GameController {
   }
 
   private initialize() {
-    // 监听 dataManager 发出的事件，假设 eventName 是一个数字 id
     eventManager.on("1001", (data: any) => {
       this.handleDataUpdate(data);
     });
@@ -97,6 +106,7 @@ export class GameController {
     });
     eventManager.on("request_fruit_run", this.request_fruit_run.bind(this));
     eventManager.on("increaseBet", this.increaseBet.bind(this));
+    eventManager.on("cancel_bet", this.cancelBet.bind(this));
   }
 
   private initData() {
@@ -104,6 +114,16 @@ export class GameController {
       credit: 0,
       bonus: 0,
       bets: [
+        { symbol: Symbol.Bar, amount: 0 },
+        { symbol: Symbol.LuckySeven, amount: 0 },
+        { symbol: Symbol.Star, amount: 0 },
+        { symbol: Symbol.Watermelon, amount: 0 },
+        { symbol: Symbol.Bell, amount: 0 },
+        { symbol: Symbol.Lemon, amount: 0 },
+        { symbol: Symbol.Orange, amount: 0 },
+        { symbol: Symbol.Apple, amount: 0 },
+      ],
+      rewards: [
         { symbol: Symbol.Bar, amount: 0 },
         { symbol: Symbol.LuckySeven, amount: 0 },
         { symbol: Symbol.Star, amount: 0 },
@@ -133,13 +153,31 @@ export class GameController {
     );
   }
 
-  setCredit() {
-    // this.score.setText("1234");
+  private increaseBet(index: number) {
+    if (this.data.bets[index].amount < 99) {
+      if (this.decreaseCredit()) {
+        this.data.bets[index].amount += this.data.chip;
+        this.setBet(index, this.data.bets[index].amount);
+        this.score.set_credit(this.data.credit);
+      }
+    }
   }
 
-  increaseBet(index: number) {
-    this.data.bets[index].amount += this.data.chip;
-    this.setBet(index, this.data.bets[index].amount);
+  private decreaseCredit(): boolean {
+    if (this.data.credit >= this.data.chip) {
+      this.data.credit -= this.data.chip;
+      return true;
+    } else return false;
+  }
+
+  private cancelBet(index: number) {
+    // console.log("cancel bet");
+    if (this.data.bets[index].amount > 0) {
+      this.data.credit += this.data.bets[index].amount;
+      this.data.bets[index].amount = 0;
+      this.setBet(index, 0);
+      this.score.set_credit(this.data.credit);
+    }
   }
 
   private setBet(index: number, value: number) {
@@ -147,38 +185,52 @@ export class GameController {
     // this.bets[index].setText(value.toString());
   }
 
-  send_cmd() {
+  private setReward(index: number, value: number) {
+    this.rewards.setSpecLable(index, value.toString());
+  }
+
+  init() {
     socket.send(1001, {});
+    // console.log("init");
+    // if (!socket.send(1001, {})) {
+    //   setTimeout(() => {
+    //     this.init();
+    //   }, 500);
+    // }
   }
 
   request_fruit_run() {
     if (this.data.is_run == false) {
-      this.data.is_run = true;
-      this.set_all_button_avalible(false);
-      this.spin.stopAll();
-      this.spin.clear_highlight();
-      socket.send(2001, { flag: true, fruits: this.data.bets });
+      if (this.get_bets_value() > 0) {
+        this.data.is_run = true;
+        this.set_all_button_avalible(false);
+        this.spin.stopAll();
+        this.spin.clear_highlight();
+        socket.send(2001, { flag: 0, fruits: this.data.bets });
+      }
     }
   }
 
   private handleDataUpdate(data: any) {
     // 处理 dataManager 发来的数据
-    console.log("Received data from dataManager:", JSON.stringify(data));
+    // console.log("Received data from dataManager:", JSON.stringify(data));
+    this.data.credit = data.balance;
+    this.score.set_credit(this.data.credit);
   }
 
   private handleSlot(data: any) {
     // 处理 dataManager 发来的数据
-    console.log("Received data from dataManager:", JSON.stringify(data));
+    // console.log("Received data from dataManager:", JSON.stringify(data));
     this.data.lights = data.lights;
     this.data.currentOddsIndex = data.odds;
-    this.data.credit = data.balance;
+    // this.data.credit = data.balance;
     this.data.bonus = data.win;
+    this.data.rewards = data.part;
     const [steps, speed] = this.calculate_steps_and_speed(
       this.data.lights[0],
       this.data.currentOddsIndex
     );
     this.data.lights.splice(0, 1);
-    console.log("lights: ", this.data.lights);
     this.run(steps, speed);
   }
 
@@ -222,26 +274,12 @@ export class GameController {
   }
 
   private set_actived_odds_index(target: number, steps: number): void {
-    const index = (target + ((3 - (steps % 3)) % 3)) % 3;
-    // console.log("steps: ", steps);
-    // steps = steps % 3;
-    // let index;
-    // switch (steps) {
-    //   case 1:
-    //     index = target + 2;
-    //     break;
-    //   case 2:
-    //     index = target + 1;
-    //     break;
-    //   default:
-    //     index = target;
-    // }
-    // index = index % 3;
+    const index = (target + steps) % 3;
     this.activedOdds.set_current_pos(index);
+    console.log("step: ", steps % 3, "target: ", target, "index: ", index);
   }
 
   private mulRun(): void {
-    console.log("mulRun");
     const steps = this.get_short_run_steps();
 
     this.data.lights.splice(0, 1);
@@ -283,6 +321,7 @@ export class GameController {
       this.spin.splash_highlights();
       this.score.set_bonus(this.data.bonus);
       this.score.set_credit(this.data.credit);
+      this.set_rewards();
       this.data.is_run = false;
       this.set_all_button_avalible(true);
     }, 500);
@@ -291,5 +330,19 @@ export class GameController {
   private set_all_button_avalible(flag: boolean) {
     this.actionBtns.set_goBtn_avalible(flag);
     this.fruitBtns.set_available(flag);
+  }
+
+  private set_rewards() {
+    this.data.rewards.forEach((e) => {
+      this.setReward(e.symbol, e.amount);
+    });
+  }
+
+  private get_bets_value(): number {
+    let sum = 0;
+    this.data.bets.forEach((e) => {
+      sum += e.amount;
+    });
+    return sum;
   }
 }

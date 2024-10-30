@@ -44,12 +44,14 @@ export class OddsComponent extends Phaser.GameObjects.Container {
       const textStyle =
         i === 0 || i === this.numOdds - 1
           ? {
-              fontSize: "30px",
+              fontSize: "40px",
               fontStyle: "bold",
               color: "yellow",
+              stroke: "white",
+              strokeThickness: 1,
             }
           : {
-              fontSize: "30px",
+              fontSize: "40px",
               fontStyle: "bold",
               color: "#000000",
               stroke: "white",
@@ -94,7 +96,7 @@ export class ActiveOddsComponent extends Phaser.GameObjects.Container {
       const labelText = this.oddsValues[i];
 
       const textStyle = {
-        fontSize: "30px",
+        fontSize: "40px",
         fontStyle: "bold",
         color: "yellow",
       };
@@ -139,10 +141,10 @@ export class ActiveOddsComponent extends Phaser.GameObjects.Container {
   }
 
   move(): void {
-    this.currentPos = (this.currentPos + 1) % 3;
-    const pos = this.convertNumber(this.currentPos);
-    this.odds_visible(pos);
-    // this.odds_visible(this.currentPos);
+    this.currentPos = (this.currentPos + 2) % 3;
+    // const pos = this.convertNumber(this.currentPos);
+    // this.odds_visible(pos);
+    this.odds_visible(this.currentPos);
   }
 
   private convertNumber(num: number): number {
