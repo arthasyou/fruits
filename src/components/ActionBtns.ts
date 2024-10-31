@@ -10,8 +10,8 @@ export class ActionBtns extends Phaser.GameObjects.Container {
     super(scene, 0, 985);
 
     this.goBtn = this.createGoBtn(scene);
-    this.smallBtn = this.createSmallOrBigBtn(scene, { x: 450, y: 0 }, "1-7");
-    this.bigBtn = this.createSmallOrBigBtn(scene, { x: 530, y: 0 }, "8-14");
+    this.smallBtn = this.createSmallOrBigBtn(scene, { x: 450, y: 0 }, "1-7", 0);
+    this.bigBtn = this.createSmallOrBigBtn(scene, { x: 530, y: 0 }, "8-14", 1);
   }
 
   // 专用方法，创建 goBtn，仅需指定基本属性
@@ -30,7 +30,8 @@ export class ActionBtns extends Phaser.GameObjects.Container {
   private createSmallOrBigBtn(
     scene: Phaser.Scene,
     position: { x: number; y: number },
-    text: string
+    text: string,
+    index: number
   ): ButtonComponent {
     const btn = new ButtonComponent(scene, {
       position,
@@ -45,14 +46,14 @@ export class ActionBtns extends Phaser.GameObjects.Container {
         align: "right",
       },
       textPosition: { x: 0, y: -8 },
-      callbackUp: this.handleBetChange.bind(this),
+      callbackUp: () => this.handleBetChange(index),
     });
     this.add(btn);
     return btn;
   }
 
-  private handleBetChange(): void {
-    console.log("gobtn");
+  private handleBetChange(index: number): void {
+    eventManager.emit("request_big_or_small", index);
   }
 
   private run(): void {

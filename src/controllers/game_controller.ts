@@ -111,9 +111,16 @@ export class GameController {
     eventManager.on("2001", (data: any) => {
       this.handleSlot(data);
     });
+    eventManager.on("2002", (data: any) => {
+      this.handleBigOrSmall(data);
+    });
     eventManager.on("request_fruit_run", this.request_fruit_run.bind(this));
     eventManager.on("increaseBet", this.increaseBet.bind(this));
     eventManager.on("cancel_bet", this.cancelBet.bind(this));
+    eventManager.on(
+      "request_big_or_small",
+      this.request_big_or_small.bind(this)
+    );
   }
 
   private initData() {
@@ -243,7 +250,6 @@ export class GameController {
   }
 
   private cancelBet(index: number) {
-    // console.log("cancel bet");
     if (this.data.bets[index].amount > 0) {
       this.data.credit += this.data.bets[index].amount;
       this.data.bets[index].amount = 0;
@@ -254,7 +260,6 @@ export class GameController {
 
   private setBet(index: number, value: number) {
     this.bets.setSpecLable(index, value.toString());
-    // this.bets[index].setText(value.toString());
   }
 
   private setReward(index: number, value: number) {
@@ -322,16 +327,14 @@ export class GameController {
   }
 
   private handleDataUpdate(data: any) {
-    // 处理 dataManager 发来的数据
     // console.log("Received data from dataManager:", JSON.stringify(data));
     this.data.credit = data.balance;
     this.score.set_credit(this.data.credit);
   }
 
   private handleSlot(data: any) {
-    this.transitionToState(SlotState.Running);
-    // 处理 dataManager 发来的数据
     // console.log("Received data from dataManager:", JSON.stringify(data));
+    this.transitionToState(SlotState.Running);
     this.data.lights = data.lights;
     this.data.currentOddsIndex = data.odds;
     // this.data.credit = data.balance;
@@ -465,5 +468,14 @@ export class GameController {
       bet.amount = 0;
     });
     this.bets.resetAmounts();
+  }
+
+  private request_big_or_small(index: number): void {
+    console.log(index);
+    socket.send(2002, { index, amount: this.data.bonus });
+  }
+
+  private handleBigOrSmall(data: any): void {
+    console.log(data);
   }
 }
