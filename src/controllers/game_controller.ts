@@ -8,6 +8,7 @@ import { ActiveOddsComponent } from "../components/Odds";
 import { Score } from "../components/Score";
 import { ActionBtns } from "../components/ActionBtns";
 import { FruitButtonGroup } from "../components/FruitBtns";
+import { LabelComponent } from "phaser-utils/src/components/Label";
 
 const StartTimeIntervals: number[] = [
   0.000001, 346.15384615384615, 115.38461538461539, 230.76923076923078,
@@ -66,6 +67,7 @@ export class GameController {
   private bets: RowLabelComponent;
   private rewards: RowLabelComponent;
   private activedOdds: ActiveOddsComponent;
+  private bigOrSamll: LabelComponent;
   private actionBtns: ActionBtns;
   private fruitBtns: FruitButtonGroup;
   private data: GameData;
@@ -83,6 +85,7 @@ export class GameController {
     rewards: RowLabelComponent,
     spin: SpinComponent,
     activedOdds: ActiveOddsComponent,
+    bigOrSamll: LabelComponent,
     actionBtns: ActionBtns,
     fruitBtns: FruitButtonGroup
   ) {
@@ -93,6 +96,7 @@ export class GameController {
     this.score = score;
     this.spin = spin;
     this.activedOdds = activedOdds;
+    this.bigOrSamll = bigOrSamll;
     this.actionBtns = actionBtns;
     this.fruitBtns = fruitBtns;
 
@@ -477,5 +481,13 @@ export class GameController {
 
   private handleBigOrSmall(data: any): void {
     console.log(data);
+    this.bigOrSamll.setText(data.result.toString());
+    this.updateBonus(data.win);
+    if (data.win > 0) {
+      this.biuSound.play();
+    } else {
+      this.paSound.play();
+      this.transitionToState(SlotState.Repeated);
+    }
   }
 }

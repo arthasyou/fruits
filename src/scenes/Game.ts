@@ -7,6 +7,7 @@ import { RowLabelComponent } from "../components/RowLabels";
 import { FruitButtonGroup } from "../components/FruitBtns";
 import { ActionBtns } from "../components/ActionBtns";
 import { Score } from "../components/Score";
+import { LabelComponent } from "phaser-utils/src/components/Label";
 
 export class Game extends Scene {
   private spin: SpinComponent;
@@ -15,6 +16,7 @@ export class Game extends Scene {
   private reward: RowLabelComponent;
   private odds: OddsComponent;
   private activeOdds: ActiveOddsComponent;
+  private bigOrSmall: LabelComponent;
   private actionBtns: ActionBtns;
   private fruitBtns: FruitButtonGroup;
   private controller: GameController;
@@ -82,6 +84,7 @@ export class Game extends Scene {
       this.reward,
       this.spin,
       this.activeOdds,
+      this.bigOrSmall,
       this.actionBtns,
       this.fruitBtns
     );
@@ -130,6 +133,21 @@ export class Game extends Scene {
     });
     this.odds = new OddsComponent(this);
     this.activeOdds = new ActiveOddsComponent(this);
+    this.bigOrSmall = new LabelComponent(this, {
+      position: { x: 380, y: 600 },
+      text: "0",
+      imageKey: "bs",
+      textStyle: {
+        fontSize: 80,
+        color: "red",
+        stroke: "black",
+        strokeThickness: 5,
+        fontStyle: "bold",
+        align: "right",
+      },
+      imageSize: { width: 120, height: 120 },
+      textOrigin: { x: 0.5, y: 0.5 },
+    });
     this.actionBtns = new ActionBtns(this);
     this.fruitBtns = new FruitButtonGroup(this);
   }
@@ -138,8 +156,8 @@ export class Game extends Scene {
     this.add.existing(this.score);
     this.add.existing(this.spin);
     this.add.existing(this.odds);
-
     this.add.existing(this.activeOdds);
+    this.add.existing(this.bigOrSmall);
     this.add.existing(this.actionBtns);
     this.add.existing(this.bets);
     this.add.existing(this.reward);

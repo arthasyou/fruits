@@ -9,14 +9,9 @@ function getQueryParam(param: string): string | null {
 
 const mode = getQueryParam("session_id");
 
-console.log("Config socket URL:", cfg.socket_url);
-console.log("Mode parameter:", mode);
-
 const socketUrl: string = mode
   ? `${cfg.socket_url}?session_id=${mode}`
   : cfg.socket_url;
-
-console.log("Final socket URL:", socketUrl);
 
 WebSocketService.setUrl(socketUrl);
 protoService.initialize("proto/message.proto", "pba");
