@@ -27,6 +27,7 @@ export class FruitButtonGroup extends Phaser.GameObjects.Container {
 
   private sounds: Phaser.Sound.BaseSound[] = [];
   private offSets: number[] = [-320, -230, -140, -48, 48, 140, 230, 320];
+  private timerId?: NodeJS.Timeout = undefined;
   private isKeyPressed: boolean[] = [
     false,
     false,
@@ -62,20 +63,23 @@ export class FruitButtonGroup extends Phaser.GameObjects.Container {
   private handleBetChange(index: number): void {
     // console.log("up");
     this.isKeyPressed[index] = false;
+    this.cancelTimer();
     this.sounds[index].play();
     eventManager.emit("increaseBet", index);
   }
 
   private press_down(index: number): void {
-    this.isKeyPressed[index] = true;
-    setTimeout(() => {
-      this.long_press(index);
-    }, 500);
+    if (this.timerId === undefined) {
+      this.isKeyPressed[index] = true;
+      this.timerId = setTimeout(() => {
+        this.long_press(index);
+      }, 500);
+    }
   }
 
   private long_press(index: number): void {
     if (this.isKeyPressed[index]) {
-      setTimeout(() => {
+      this.timerId = setTimeout(() => {
         eventManager.emit("increaseBet", index);
         this.long_press(index);
       }, 30);
@@ -86,9 +90,18 @@ export class FruitButtonGroup extends Phaser.GameObjects.Container {
     // console.log("cancel");
     if (this.isKeyPressed[index]) {
       this.isKeyPressed[index] = false;
-      setTimeout(() => {
-        eventManager.emit("cancel_bet", index);
-      }, 40);
+      eventManager.emit("cancel_bet", index);
+      this.cancelTimer();
+      // setTimeout(() => {
+      //   eventManager.emit("cancel_bet", index);
+      // }, 40);
+    }
+  }
+
+  private cancelTimer(): void {
+    if (this.timerId) {
+      clearTimeout(this.timerId);
+      this.timerId = undefined;
     }
   }
 

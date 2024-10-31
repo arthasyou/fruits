@@ -89,7 +89,6 @@ export class GameController {
     actionBtns: ActionBtns,
     fruitBtns: FruitButtonGroup
   ) {
-    // console.log("ghgheheir:", scene);
     this.initialize();
     this.bets = bets;
     this.rewards = rewards;
@@ -402,7 +401,6 @@ export class GameController {
   private set_actived_odds_index(target: number, steps: number): void {
     const index = (target + steps) % 3;
     this.activedOdds.set_current_pos(index);
-    console.log("step: ", steps % 3, "target: ", target, "index: ", index);
   }
 
   private mulRun(): void {
@@ -483,12 +481,10 @@ export class GameController {
   }
 
   private request_big_or_small(index: number): void {
-    console.log(index);
     socket.send(2002, { index, amount: this.data.bonus });
   }
 
   private handleBigOrSmall(data: any): void {
-    console.log(data);
     this.bigOrSamll.setText(data.result.toString());
     this.chagneBonus(data.win);
     if (data.win > 0) {
@@ -512,6 +508,8 @@ export class GameController {
       this.data.credit--;
       this.data.bonus++;
       this.updateScore();
+    } else {
+      this.actionBtns.cancel_time();
     }
   }
 
@@ -521,7 +519,8 @@ export class GameController {
       this.data.credit++;
       this.updateScore();
     } else {
-      this.transitionToState(SlotState.Repeated);
+      this.actionBtns.cancel_time();
+      // this.transitionToState(SlotState.Repeated);
     }
   }
 }

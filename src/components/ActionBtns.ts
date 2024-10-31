@@ -7,6 +7,8 @@ export enum Direction {
 }
 
 export class ActionBtns extends Phaser.GameObjects.Container {
+  private isKeyPressed: boolean = false;
+  private timerId?: NodeJS.Timeout = undefined;
   private goBtn: ButtonComponent;
   private bigBtn: ButtonComponent;
   private smallBtn: ButtonComponent;
@@ -90,7 +92,9 @@ export class ActionBtns extends Phaser.GameObjects.Container {
         align: "right",
       },
       textPosition: { x: 0, y: -16 },
+      callbackDown: () => this.press_down(direction),
       callbackUp: () => this.handleScore(direction),
+      callbackOut: () => this.handleScore(direction),
     });
     this.add(btn);
     return btn;
@@ -105,6 +109,7 @@ export class ActionBtns extends Phaser.GameObjects.Container {
   }
 
   private handleScore(deriction: Direction): void {
+    this.isKeyPressed = false;
     eventManager.emit("request_change_score", deriction);
   }
 
@@ -117,5 +122,32 @@ export class ActionBtns extends Phaser.GameObjects.Container {
     this.smallBtn.set_available(flag);
     this.leftBtn.set_available(flag);
     this.rightBtn.set_available(flag);
+  }
+
+  private press_down(deriction: Direction): void {
+    if (this.timerId === undefined) {
+      this.isKeyPressed = true;
+      this.timerId = setTimeout(() => {
+        this.long_press(deriction);
+      }, 500);
+    }
+  }
+
+  private long_press(deriction: Direction): void {
+    if (this.isKeyPressed) {
+      this.timerId = setTimeout(() => {
+        eventManager.emit("request_change_score", deriction);
+        this.long_press(deriction);
+      }, 30);
+    }
+  }
+
+  cancel_time(): void {
+    // console.log(this.timerId);
+    this.isKeyPressed = false;
+    if (this.timerId !== undefined) {
+      clearTimeout(this.timerId);
+      this.timerId = undefined;
+    }
   }
 }
