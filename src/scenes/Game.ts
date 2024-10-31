@@ -53,6 +53,8 @@ export class Game extends Scene {
     this.load.image("fruitBtnBet100", "images/fruit_btn_bet_100.png");
     this.load.image("fruitBtnBet12", "images/fruit_btn_bet_12.png");
     this.load.image("fruitBtnBet122", "images/fruit_btn_bet_122.png");
+    this.load.image("bs", "images/fruit_img_2.png");
+
     //audio
     this.load.audio("C", "audio/button1.mp3");
     this.load.audio("D", "audio/button2.mp3");
