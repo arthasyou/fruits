@@ -6,7 +6,7 @@ import { SpinComponent } from "phaser-utils/src/components/Spin";
 import { StepTimerController } from "phaser-utils/src/services/StepTimerController";
 import { ActiveOddsComponent } from "../components/Odds";
 import { Score } from "../components/Score";
-import { ActionBtns } from "../components/ActionBtns";
+import { ActionBtns, Direction } from "../components/ActionBtns";
 import { FruitButtonGroup } from "../components/FruitBtns";
 import { LabelComponent } from "phaser-utils/src/components/Label";
 
@@ -124,6 +124,10 @@ export class GameController {
     eventManager.on(
       "request_big_or_small",
       this.request_big_or_small.bind(this)
+    );
+    eventManager.on(
+      "request_change_score",
+      this.request_change_score.bind(this)
     );
   }
 
@@ -301,27 +305,31 @@ export class GameController {
     const betValue = this.get_bets_value();
     if (this.data.credit >= betValue) {
       this.toggleGoButton(false);
-      this.updateCredit(-betValue);
+      this.chagneCredit(-betValue);
       this.sendSocketData(2001, 1);
     }
   }
 
   private handleBigOrSmallState() {
-    this.updateCredit(this.data.bonus);
-    this.updateBonus(0);
+    this.chagneCredit(this.data.bonus);
+    this.chagneBonus(0);
     this.transitionToState(SlotState.Repeated);
   }
 
   private toggleGoButton(isAvailable: boolean) {
     this.actionBtns.set_goBtn_avalible(isAvailable);
   }
+  private updateScore() {
+    this.score.set_credit(this.data.credit);
+    this.score.set_bonus(this.data.bonus);
+  }
 
-  private updateCredit(amount: number) {
+  private chagneCredit(amount: number) {
     this.data.credit += amount;
     this.score.set_credit(this.data.credit);
   }
 
-  private updateBonus(amount: number) {
+  private chagneBonus(amount: number) {
     this.data.bonus = amount;
     this.score.set_bonus(this.data.bonus);
   }
@@ -482,11 +490,37 @@ export class GameController {
   private handleBigOrSmall(data: any): void {
     console.log(data);
     this.bigOrSamll.setText(data.result.toString());
-    this.updateBonus(data.win);
+    this.chagneBonus(data.win);
     if (data.win > 0) {
       this.biuSound.play();
     } else {
       this.paSound.play();
+      this.transitionToState(SlotState.Repeated);
+    }
+  }
+
+  private request_change_score(d: Direction): void {
+    if (d == Direction.Left) {
+      this.credit_to_bonus();
+    } else {
+      this.bonus_to_credit();
+    }
+  }
+
+  private credit_to_bonus() {
+    if (this.data.credit >= 1) {
+      this.data.credit--;
+      this.data.bonus++;
+      this.updateScore();
+    }
+  }
+
+  private bonus_to_credit() {
+    if (this.data.bonus >= 1) {
+      this.data.bonus--;
+      this.data.credit++;
+      this.updateScore();
+    } else {
       this.transitionToState(SlotState.Repeated);
     }
   }
