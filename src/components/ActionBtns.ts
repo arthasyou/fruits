@@ -38,10 +38,11 @@ export class ActionBtns extends Phaser.GameObjects.Container {
   // 专用方法，创建 goBtn，仅需指定基本属性
   private createGoBtn(scene: Phaser.Scene): ButtonComponent {
     const goBtn = new ButtonComponent(scene, {
-      position: { x: 650, y: 0 },
+      position: { x: 650, y: 44 },
       defaultTexture: "fruitBtnBet10",
       clickedTexture: "fruitBtnBet100",
       callbackUp: this.run.bind(this),
+      align: "bottom",
     });
     this.add(goBtn);
     return goBtn;
@@ -110,6 +111,7 @@ export class ActionBtns extends Phaser.GameObjects.Container {
 
   private handleScore(deriction: Direction): void {
     this.isKeyPressed = false;
+    this.cancel_time();
     eventManager.emit("request_change_score", deriction);
   }
 

@@ -24,6 +24,7 @@ const EndTimeIntervals: number[] = [
 const SpinDuration: number = 2507.692307692308;
 
 const MAX_BET_AMOUNT = 99;
+const MAX_BONUS_AMOUNT = 9999;
 const WAIT_TIME_BEFORE_NEXT_RUN = 500;
 
 interface GameData {
@@ -487,7 +488,11 @@ export class GameController {
   private handleBigOrSmall(data: any): void {
     this.bigOrSamll.setText(data.result.toString());
     this.chagneBonus(data.win);
-    if (data.win > 0) {
+    if (data.win > 9999) {
+      this.biuSound.play();
+      this.actionBtns.set_big_or_small_avalibel(false);
+      // this.transitionToState(SlotState.Repeated);
+    } else if (data.win > 0) {
       this.biuSound.play();
     } else {
       this.paSound.play();
@@ -504,12 +509,14 @@ export class GameController {
   }
 
   private credit_to_bonus() {
-    if (this.data.credit >= 1) {
-      this.data.credit--;
-      this.data.bonus++;
-      this.updateScore();
-    } else {
-      this.actionBtns.cancel_time();
+    if (this.data.bonus < MAX_BONUS_AMOUNT) {
+      if (this.data.credit >= 1) {
+        this.data.credit--;
+        this.data.bonus++;
+        this.updateScore();
+      } else {
+        this.actionBtns.cancel_time();
+      }
     }
   }
 
